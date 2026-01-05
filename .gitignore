@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# --- Node/Frontend ---
+node_modules/
+dist/
+.npm/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+
+# --- Environment & Secrets (严禁上传) ---
+.env
+.env.local
+config.py   # 如果里面直接写了密码
+key.pem
+
+# --- Data/Logs (ATP 特定) ---
+celerybeat-schedule
+*.log
+logs/
+temp_reports/  # 之前 PRD 里定义的挂载目录
