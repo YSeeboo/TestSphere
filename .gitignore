@@ -10,11 +10,13 @@ htmlcov/
 # --- Node/Frontend ---
 node_modules/
 dist/
+todos/
 .npm/
 
 # --- IDE ---
 .idea/
 .vscode/
+.cursorrules
 *.swp
 
 # --- Environment & Secrets (严禁上传) ---

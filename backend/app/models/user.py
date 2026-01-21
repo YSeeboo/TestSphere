@@ -1,0 +1,48 @@
+"""用户模型."""
+
+from datetime import datetime
+from sqlalchemy import Boolean, String, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.session import Base
+
+
+class User(Base):
+    """
+    用户模型.
+    
+    Attributes:
+        id: 用户唯一标识
+        email: 用户邮箱 (唯一索引)
+        username: 用户名
+        hashed_password: 哈希后的密码
+        is_active: 是否激活 (默认 True)
+        is_superuser: 是否超级管理员 (默认 False)
+        created_at: 创建时间
+        updated_at: 更新时间
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(100), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        default=datetime.utcnow, 
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, 
+        default=datetime.utcnow, 
+        onupdate=datetime.utcnow, 
+        nullable=False
+    )
+
+    def __repr__(self) -> str:
+        """字符串表示."""
+        return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: atp_postgres
+    environment:
+      POSTGRES_DB: atp_db
+      POSTGRES_USER: atp_user
+      POSTGRES_PASSWORD: atp_password
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atp_user -d atp_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - atp_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: atp_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - atp_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  atp_network:
+    driver: bridge
