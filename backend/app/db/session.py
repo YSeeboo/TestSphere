@@ -1,16 +1,18 @@
 """SQLAlchemy 异步会话管理."""
 
 from typing import AsyncGenerator
+from sqlalchemy import create_engine, Engine
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 
 from app.core.config import settings
 
+# ==================== 异步引擎 (供 FastAPI 使用) ====================
 # 创建异步引擎
 async_engine: AsyncEngine = create_async_engine(
     str(settings.DATABASE_URL),
@@ -29,6 +31,32 @@ async_session_maker = async_sessionmaker(
     expire_on_commit=False,
     autocommit=False,
     autoflush=False,
+)
+
+
+# ==================== 同步引擎 (供 Celery Worker 使用) ====================
+# 将 postgresql+asyncpg 替换为 postgresql+psycopg2
+sync_database_url = str(settings.DATABASE_URL).replace(
+    "postgresql+asyncpg://", "postgresql+psycopg2://"
+)
+
+# 创建同步引擎
+sync_engine: Engine = create_engine(
+    sync_database_url,
+    echo=settings.DB_ECHO,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_MAX_OVERFLOW,
+    pool_timeout=settings.DB_POOL_TIMEOUT,
+    pool_recycle=settings.DB_POOL_RECYCLE,
+    pool_pre_ping=True,
+)
+
+# 创建同步会话工厂
+SessionLocal = sessionmaker(
+    bind=sync_engine,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
 )
 
 

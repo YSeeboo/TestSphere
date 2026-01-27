@@ -3,12 +3,25 @@
  * 主布局组件
  * 包含头部导航、侧边栏和内容区域
  */
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Folder, DataAnalysis, HomeFilled, InfoFilled, User, DocumentCopy } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { useProjectStore } from '@/stores/project'
 
 const router = useRouter()
 const userStore = useUserStore()
+const projectStore = useProjectStore()
+
+// 当前项目名称
+const currentProjectName = computed(() => {
+  return projectStore.currentProject?.name || '未选择项目'
+})
+
+// 是否已选择项目
+const hasProject = computed(() => {
+  return projectStore.currentProjectId !== null
+})
 
 const isCollapse = ref(false)
 
@@ -31,6 +44,14 @@ function handleCommand(command: string) {
 function handleLogout() {
   userStore.logout()
 }
+
+/**
+ * 初始化项目 Store
+ * 从 localStorage 恢复当前项目 ID
+ */
+onMounted(() => {
+  projectStore.init()
+})
 </script>
 
 <template>
@@ -48,16 +69,31 @@ function handleLogout() {
         router
         class="sidebar-menu"
       >
-        <el-menu-item index="/dashboard">
+        <!-- 项目管理 - 始终显示 -->
+        <el-menu-item index="/projects">
+          <el-icon><Folder /></el-icon>
+          <template #title>项目管理</template>
+        </el-menu-item>
+        
+        <!-- 仪表盘 - 仅在选择项目后显示 -->
+        <el-menu-item v-if="hasProject" index="/dashboard">
           <el-icon><DataAnalysis /></el-icon>
           <template #title>仪表盘</template>
         </el-menu-item>
         
-        <el-menu-item index="/home">
+        <!-- 用例管理 - 仅在选择项目后显示 -->
+        <el-menu-item v-if="hasProject" index="/test-cases">
+          <el-icon><DocumentCopy /></el-icon>
+          <template #title>用例管理</template>
+        </el-menu-item>
+        
+        <!-- 首页 - 仅在选择项目后显示 -->
+        <el-menu-item v-if="hasProject" index="/home">
           <el-icon><HomeFilled /></el-icon>
           <template #title>首页</template>
         </el-menu-item>
         
+        <!-- 关于 - 始终显示 -->
         <el-menu-item index="/about">
           <el-icon><InfoFilled /></el-icon>
           <template #title>关于</template>
@@ -72,6 +108,11 @@ function handleLogout() {
         <div class="header-left">
           <el-button :icon="isCollapse ? 'Expand' : 'Fold'" @click="toggleSidebar" />
           <span class="header-title">ATP Platform</span>
+          <el-divider direction="vertical" />
+          <span class="current-project">
+            <el-icon><Folder /></el-icon>
+            {{ currentProjectName }}
+          </span>
         </div>
         
         <div class="header-right">
@@ -146,6 +187,17 @@ function handleLogout() {
       font-size: 18px;
       font-weight: 600;
       color: #303133;
+    }
+    
+    .current-project {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #606266;
+      padding: 4px 12px;
+      background-color: #f5f7fa;
+      border-radius: 4px;
     }
   }
   

@@ -1,10 +1,14 @@
 """用户模型."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, String, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+if TYPE_CHECKING:
+    from app.models.project import Project
 
 
 class User(Base):
@@ -20,6 +24,7 @@ class User(Base):
         is_superuser: 是否超级管理员 (默认 False)
         created_at: 创建时间
         updated_at: 更新时间
+        projects: 用户拥有的项目列表
     """
 
     __tablename__ = "users"
@@ -41,6 +46,13 @@ class User(Base):
         default=datetime.utcnow, 
         onupdate=datetime.utcnow, 
         nullable=False
+    )
+
+    # Relationship: 用户拥有的项目列表
+    projects: Mapped[list["Project"]] = relationship(
+        "Project",
+        back_populates="owner",
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

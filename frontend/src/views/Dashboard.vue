@@ -3,14 +3,30 @@
  * 仪表盘页面 - 简单的欢迎页面
  */
 import { computed } from 'vue'
+import { UserFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { useProjectStore } from '@/stores/project'
 
 const userStore = useUserStore()
+const projectStore = useProjectStore()
 
 // 获取用户显示名称（优先显示 email）
 const displayName = computed(() => {
   return userStore.userInfo?.email || userStore.userInfo?.username || '用户'
 })
+
+// 格式化日期
+function formatDate(dateStr: string | undefined): string {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 </script>
 
 <template>
@@ -22,6 +38,16 @@ const displayName = computed(() => {
         <p class="welcome-text">您已成功登录 ATP Platform 自动化测试平台</p>
         <el-divider />
         <div class="info-section">
+          <p><strong>当前项目：</strong></p>
+          <ul v-if="projectStore.currentProject">
+            <li>项目名称: {{ projectStore.currentProject.name }}</li>
+            <li>项目描述: {{ projectStore.currentProject.description || '无' }}</li>
+            <li>创建时间: {{ formatDate(projectStore.currentProject.created_at) }}</li>
+          </ul>
+          <el-empty v-else description="未选择项目" :image-size="60" />
+          
+          <el-divider />
+          
           <p><strong>用户信息：</strong></p>
           <ul>
             <li>邮箱: {{ userStore.userInfo?.email }}</li>

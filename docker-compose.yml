@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U atp_user -d atp_db"]
+      test: [ "CMD-SHELL", "pg_isready -U atp_user -d atp_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,10 +30,66 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 5
+    networks:
+      - atp_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atp_backend
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=atp_user
+      - POSTGRES_PASSWORD=atp_password
+      - POSTGRES_DB=atp_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - atp_network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atp_worker
+    command: >
+      sh -c "apt-get update && apt-get install -y git && poetry run celery -A app.core.celery_app worker --loglevel=info"
+    volumes:
+      - ./backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/atp_repos:/tmp/atp_repos
+      - /tmp/atp_runs:/tmp/atp_runs
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=atp_user
+      - POSTGRES_PASSWORD=atp_password
+      - POSTGRES_DB=atp_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - atp_network
 

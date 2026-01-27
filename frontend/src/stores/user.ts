@@ -112,6 +112,15 @@ export const useUserStore = defineStore('user', () => {
     // 清除用户信息
     setUserInfo(null)
     
+    // 清除项目状态
+    try {
+      const { useProjectStore } = await import('@/stores/project')
+      const projectStore = useProjectStore()
+      projectStore.reset()
+    } catch (error) {
+      console.error('Failed to reset project store:', error)
+    }
+    
     // 提示
     ElMessage.success('已退出登录')
     
@@ -125,6 +134,16 @@ export const useUserStore = defineStore('user', () => {
   function reset() {
     setToken(null)
     setUserInfo(null)
+    
+    // 清除项目状态
+    try {
+      const { useProjectStore } = require('@/stores/project')
+      const projectStore = useProjectStore()
+      projectStore.reset()
+    } catch (error) {
+      // 如果 project store 尚未初始化，忽略错误
+      console.debug('Project store not initialized yet')
+    }
   }
 
   return {

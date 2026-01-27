@@ -1,4 +1,5 @@
 import { useUserStore } from '@/stores/user'
+import { useProjectStore } from '@/stores/project'
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 
 /**
@@ -9,6 +10,7 @@ declare module 'vue-router' {
     title?: string
     requiresAuth?: boolean // 是否需要登录
     guest?: boolean // 是否是访客页面（登录后不可访问）
+    requiresProject?: boolean // 是否需要选择项目
   }
 }
 
@@ -51,6 +53,28 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '仪表盘',
           requiresAuth: true,
+          requiresProject: true, // 需要选择项目
+        },
+      },
+      // 项目管理
+      {
+        path: '/projects',
+        name: 'Projects',
+        component: () => import('@/views/project/index.vue'),
+        meta: {
+          title: '项目管理',
+          requiresAuth: true,
+        },
+      },
+      // 用例管理
+      {
+        path: '/test-cases',
+        name: 'TestCases',
+        component: () => import('@/views/testCase/index.vue'),
+        meta: {
+          title: '用例管理',
+          requiresAuth: true,
+          requiresProject: true, // 需要选择项目
         },
       },
       // 保留原有的首页路由（兼容性）
@@ -61,6 +85,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '首页',
           requiresAuth: true,
+          requiresProject: true, // 需要选择项目
         },
       },
       // 关于页面
@@ -128,6 +153,20 @@ router.beforeEach(async (to, _from, next) => {
         next({
           path: '/login',
           query: { redirect: to.fullPath },
+        })
+        return
+      }
+    }
+
+    // 需要选择项目的页面
+    if (to.meta.requiresProject) {
+      const projectStore = useProjectStore()
+      
+      // 如果没有选择项目，重定向到项目管理页
+      if (!projectStore.currentProjectId) {
+        next({
+          path: '/projects',
+          query: { redirect: to.fullPath }, // 保存原始目标路径
         })
         return
       }
