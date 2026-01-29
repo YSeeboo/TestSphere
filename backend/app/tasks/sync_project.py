@@ -49,10 +49,11 @@ def sync_project_test_cases(self, project_id: int) -> dict[str, Any]:
             - error: 错误信息 (失败时)
     """
     logger.info(f"开始同步项目 {project_id} 的测试用例")
-    
+
     db = SessionLocal()
     project: Project | None = None
-    
+    report_path = None
+
     try:
         # ==================== 1. 获取项目信息 ====================
         result = db.execute(select(Project).where(Project.id == project_id))
@@ -251,6 +252,14 @@ def sync_project_test_cases(self, project_id: int) -> dict[str, Any]:
         }
         
     finally:
+        # 清理临时报告文件
+        if report_path and report_path.exists():
+            try:
+                report_path.unlink()
+                logger.info(f"已清理报告文件: {report_path}")
+            except Exception as e:
+                logger.warning(f"清理报告文件失败: {e}")
+
         db.close()
 
 

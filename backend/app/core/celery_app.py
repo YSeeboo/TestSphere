@@ -27,6 +27,26 @@ celery_app.conf.update(
     task_soft_time_limit=3000,  # 任务软超时 50 分钟
     worker_prefetch_multiplier=4,  # Worker 预取任务数
     worker_max_tasks_per_child=1000,  # Worker 执行多少任务后重启
+    # Celery Beat 定时任务配置
+    beat_schedule={
+        # 每5分钟重置一次卡住的状态
+        "reset-stuck-statuses": {
+            "task": "worker.reset_stuck_statuses",
+            "schedule": 300.0,  # 5 分钟
+        },
+        # 每天凌晨2点清理旧的 Git 仓库（30天未使用）
+        "cleanup-old-repos": {
+            "task": "worker.cleanup_old_repos",
+            "schedule": 86400.0,  # 24 小时
+            "args": (30,),  # 保留30天
+        },
+        # 每小时清理旧的执行目录（24小时前的）
+        "cleanup-old-run-dirs": {
+            "task": "worker.cleanup_old_run_dirs",
+            "schedule": 3600.0,  # 1 小时
+            "args": (24,),  # 保留24小时
+        },
+    },
 )
 
 # 自动发现任务

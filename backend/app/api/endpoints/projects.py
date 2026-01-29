@@ -1,5 +1,10 @@
 """项目相关 API 端点."""
 
+import asyncio
+import logging
+import shutil
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +18,10 @@ from app.schemas.test_case import TestCaseListResponse, TestCaseOut
 from app.tasks.sync_project import sync_project_test_cases
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# Git 仓库存储根目录
+REPOS_BASE_DIR = Path("/tmp/atp_repos")
 
 
 @router.get("/", response_model=list[ProjectOut])
@@ -182,14 +191,15 @@ async def delete_project(
 ) -> None:
     """
     删除项目.
-    
+
     只能删除当前用户拥有的项目 (必须检查 project.owner_id == current_user.id).
-    
+    删除项目后会自动清理对应的 Git 仓库目录。
+
     Args:
         project_id: 项目 ID
         current_user: 当前用户
         db: 数据库会话
-        
+
     Raises:
         HTTPException: 404 项目不存在或无权访问
     """
@@ -200,15 +210,27 @@ async def delete_project(
         )
     )
     project = result.scalar_one_or_none()
-    
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="项目不存在或无权访问"
         )
-    
+
+    # 删除数据库记录
     await db.delete(project)
     await db.commit()
+
+    # 清理 Git 仓库目录（异步执行，避免阻塞）
+    repo_path = REPOS_BASE_DIR / str(project_id)
+    if repo_path.exists():
+        try:
+            # 使用 asyncio.to_thread 在线程池中执行阻塞的文件操作
+            await asyncio.to_thread(shutil.rmtree, repo_path)
+            logger.info(f"已清理项目 {project_id} 的 Git 仓库目录: {repo_path}")
+        except Exception as e:
+            # 清理失败不影响删除操作，只记录日志
+            logger.error(f"清理项目 {project_id} 的 Git 仓库目录失败: {e}")
 
 
 @router.post("/{project_id}/sync", status_code=status.HTTP_202_ACCEPTED)

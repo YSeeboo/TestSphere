@@ -119,10 +119,12 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             - execution_id: 执行记录 ID
     """
     logger.info(f"开始执行测试任务 {execution_id}")
-    
+
     db = SessionLocal()
     execution: TestExecution | None = None
-    
+    container = None
+    run_path = None
+
     try:
         # ==================== 1. 获取执行记录 ====================
         result = db.execute(
@@ -268,8 +270,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 等待容器执行完成...\n"
             db.commit()
             
-            # 等待容器执行完成
-            result = container.wait()
+            # 等待容器执行完成（设置超时比 Celery soft_time_limit 稍短）
+            result = container.wait(timeout=2700)  # 45 分钟
             exit_code = result.get('StatusCode', -1)
             
             logger.info(f"容器执行完成，退出码: {exit_code}")
@@ -284,14 +286,7 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             execution.logs += f"{'='*60}\n"
             execution.logs += logs
             execution.logs += f"\n{'='*60}\n"
-            
-            # 删除容器
-            try:
-                container.remove()
-                logger.info(f"容器已删除: {container.short_id}")
-            except Exception as remove_error:
-                logger.warning(f"删除容器失败: {remove_error}")
-            
+
             # ==================== 6. 根据退出码更新状态 ====================
             if exit_code == 0:
                 execution.status = "success"
@@ -309,42 +304,28 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             # Docker 相关错误
             error_msg = f"Docker 执行错误: {docker_error}"
             logger.error(error_msg)
-            
+
             execution.status = "failed"
             execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ❌ Docker 错误: {docker_error}\n"
             execution.updated_at = datetime.now(timezone.utc)
             db.commit()
-            
-            # 尝试清理容器
-            if container:
-                try:
-                    container.remove(force=True)
-                except Exception:
-                    pass
-            
+
             return {
                 "status": "failed",
                 "message": error_msg,
                 "execution_id": execution_id,
             }
-        
+
         except Exception as exec_error:
             # 其他执行错误
             error_msg = f"执行过程错误: {exec_error}"
             logger.error(error_msg)
-            
+
             execution.status = "failed"
             execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ❌ 执行错误: {exec_error}\n"
             execution.updated_at = datetime.now(timezone.utc)
             db.commit()
-            
-            # 尝试清理容器
-            if container:
-                try:
-                    container.remove(force=True)
-                except Exception:
-                    pass
-            
+
             return {
                 "status": "failed",
                 "message": error_msg,
@@ -384,4 +365,20 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
         }
         
     finally:
+        # 清理 Docker 容器
+        if container:
+            try:
+                container.remove(force=True)
+                logger.info(f"容器已清理: {container.short_id}")
+            except Exception as e:
+                logger.error(f"容器清理失败: {e}")
+
+        # 清理执行目录
+        if run_path and run_path.exists():
+            try:
+                shutil.rmtree(run_path)
+                logger.info(f"已清理执行目录: {run_path}")
+            except Exception as e:
+                logger.warning(f"清理执行目录失败: {e}")
+
         db.close()
