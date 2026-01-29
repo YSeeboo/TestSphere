@@ -72,20 +72,26 @@ class Project(Base):
     )
 
     # Relationship: 项目所有者
-    owner: Mapped["User"] = relationship("User", back_populates="projects")
-    
+    owner: Mapped["User"] = relationship(
+        "User",
+        back_populates="projects",
+        lazy="select"  # 明确指定惰性加载策略
+    )
+
     # Relationship: 项目的测试用例
     test_cases: Mapped[list["TestCase"]] = relationship(
         "TestCase",
         back_populates="project",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="select"  # 明确指定惰性加载策略
     )
-    
+
     # Relationship: 项目的测试执行记录
     test_executions: Mapped[list["TestExecution"]] = relationship(
         "TestExecution",
         back_populates="project",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="select"  # 明确指定惰性加载策略
     )
 
     def __repr__(self) -> str:

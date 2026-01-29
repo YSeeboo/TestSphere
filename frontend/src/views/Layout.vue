@@ -3,7 +3,7 @@
  * 主布局组件
  * 包含头部导航、侧边栏和内容区域
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Folder, DataAnalysis, HomeFilled, InfoFilled, User, DocumentCopy, Tickets } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -51,13 +51,8 @@ function handleLogout() {
   userStore.logout()
 }
 
-/**
- * 初始化项目 Store
- * 从 localStorage 恢复当前项目 ID
- */
-onMounted(() => {
-  projectStore.init()
-})
+// 注意：projectStore 现在会在定义时自动从 localStorage 初始化
+// 不再需要手动调用 init() 方法
 </script>
 
 <template>

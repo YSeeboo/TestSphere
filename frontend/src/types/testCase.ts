@@ -3,6 +3,15 @@
  */
 
 /**
+ * Pytest Marker 接口
+ */
+export interface PytestMarker {
+  name: string
+  args: unknown[]
+  kwargs: Record<string, unknown>
+}
+
+/**
  * 测试用例接口
  */
 export interface TestCase {
@@ -12,7 +21,7 @@ export interface TestCase {
   name: string
   description: string | null
   nodeid: string
-  markers: Record<string, any> | null
+  markers: { markers: PytestMarker[] } | null
   created_at: string
   updated_at: string
 }

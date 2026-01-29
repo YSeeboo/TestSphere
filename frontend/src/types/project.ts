@@ -11,7 +11,9 @@ export interface Project {
   description: string | null
   owner_id: number
   git_url: string | null
-  git_branch: string | null
+  git_branch: string
+  last_sync_time: string | null
+  last_sync_status: string
   created_at: string
   updated_at: string
 }
@@ -37,4 +39,6 @@ export type ProjectCreateForm = ProjectCreate
 export interface ProjectUpdateForm {
   name?: string
   description?: string
+  git_url?: string
+  git_branch?: string
 }

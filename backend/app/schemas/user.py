@@ -32,6 +32,7 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     """用户更新 Schema."""
 
+    email: Optional[EmailStr] = Field(None, description="用户邮箱")
     username: Optional[str] = Field(None, min_length=2, max_length=100, description="用户名")
     password: Optional[str] = Field(None, min_length=6, max_length=100, description="新密码")
 

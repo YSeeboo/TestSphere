@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.api.deps import get_current_active_user, get_db
 from app.models.project import Project
@@ -164,6 +165,7 @@ async def get_test_execution(
     # 查询测试执行记录 (需要 join project 以检查权限)
     result = await db.execute(
         select(TestExecution)
+        .options(joinedload(TestExecution.project))
         .join(Project, TestExecution.project_id == Project.id)
         .where(
             TestExecution.id == execution_id,

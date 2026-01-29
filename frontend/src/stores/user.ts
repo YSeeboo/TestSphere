@@ -6,9 +6,12 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ElMessage } from 'element-plus'
+import type { AxiosError } from 'axios'
 import router from '@/router'
 import { login as loginApi, getMe } from '@/api/auth'
 import type { UserInfo, UserLoginForm } from '@/types/user'
+import type { ApiErrorResponse } from '@/utils/request'
+import { eventBus } from '@/utils/eventBus'
 
 const TOKEN_KEY = 'token'
 
@@ -18,7 +21,7 @@ const TOKEN_KEY = 'token'
 export const useUserStore = defineStore('user', () => {
   // State: Token (从 localStorage 初始化)
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
-  
+
   // State: 用户信息
   const userInfo = ref<UserInfo | null>(null)
 
@@ -75,29 +78,38 @@ export const useUserStore = defineStore('user', () => {
     try {
       // 调用登录 API
       const tokenResponse = await loginApi(loginForm)
-      
+
       // 保存 Token
       setToken(tokenResponse.access_token)
-      
+
       // 获取用户信息
       await fetchUserInfo()
-      
+
+      // 发出登录事件
+      if (userInfo.value) {
+        eventBus.emit('user:login', { userId: userInfo.value.id })
+      }
+
       // 登录成功提示
       ElMessage.success('登录成功')
-      
+
       // 跳转到首页 (使用 replace 防止返回到登录页)
       await router.replace('/')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login failed:', error)
-      
+
       // 登录失败，清除 token
       setToken(null)
       setUserInfo(null)
-      
+
       // 错误提示
-      const errorMessage = error.response?.data?.detail || error.message || '登录失败'
+      const axiosError = error as AxiosError<ApiErrorResponse>
+      const errorMessage =
+        axiosError.response?.data?.detail ||
+        axiosError.message ||
+        '登录失败'
       ElMessage.error(errorMessage)
-      
+
       throw error
     }
   }
@@ -108,22 +120,16 @@ export const useUserStore = defineStore('user', () => {
   async function logout(): Promise<void> {
     // 清除 Token
     setToken(null)
-    
+
     // 清除用户信息
     setUserInfo(null)
-    
-    // 清除项目状态
-    try {
-      const { useProjectStore } = await import('@/stores/project')
-      const projectStore = useProjectStore()
-      projectStore.reset()
-    } catch (error) {
-      console.error('Failed to reset project store:', error)
-    }
-    
+
+    // 发出登出事件（其他 Store 可以监听此事件来清理状态）
+    eventBus.emit('user:logout')
+
     // 提示
     ElMessage.success('已退出登录')
-    
+
     // 跳转到登录页
     await router.push('/login')
   }
@@ -134,27 +140,20 @@ export const useUserStore = defineStore('user', () => {
   function reset() {
     setToken(null)
     setUserInfo(null)
-    
-    // 清除项目状态
-    try {
-      const { useProjectStore } = require('@/stores/project')
-      const projectStore = useProjectStore()
-      projectStore.reset()
-    } catch (error) {
-      // 如果 project store 尚未初始化，忽略错误
-      console.debug('Project store not initialized yet')
-    }
+
+    // 发出登出事件
+    eventBus.emit('user:logout')
   }
 
   return {
     // State
     token,
     userInfo,
-    
+
     // Computed
     isLoggedIn,
     isSuperUser,
-    
+
     // Actions
     setToken,
     setUserInfo,

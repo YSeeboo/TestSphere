@@ -5,6 +5,9 @@ from app.db.session import Base
 
 # 导入所有模型，确保 Alembic 能够检测到它们
 from app.models.user import User  # noqa: F401
+from app.models.project import Project  # noqa: F401
+from app.models.test_case import TestCase  # noqa: F401
+from app.models.test_execution import TestExecution  # noqa: F401
 
 # 注意: 每次新增模型时，必须在此处导入，否则 Alembic 无法自动生成迁移
 

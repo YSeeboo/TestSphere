@@ -52,7 +52,8 @@ class User(Base):
     projects: Mapped[list["Project"]] = relationship(
         "Project",
         back_populates="owner",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="select"  # 明确指定惰性加载策略
     )
 
     def __repr__(self) -> str:

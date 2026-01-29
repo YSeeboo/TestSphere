@@ -20,10 +20,22 @@ export default defineConfig({
       dts: 'src/components.d.ts',
     }),
   ],
-  
+
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+    },
+  },
+
+  // CSS 预处理器配置
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // 使用现代 Sass API（默认值）
+        api: 'modern-compiler',
+        // 如果需要全局变量或 mixins，可以在这里导入
+        // additionalData: `@use "@/styles/variables.scss" as *;`
+      },
     },
   },
 

@@ -64,7 +64,11 @@ class TestExecution(Base):
     )
 
     # Relationship: 关联的项目
-    project: Mapped["Project"] = relationship("Project", back_populates="test_executions")
+    project: Mapped["Project"] = relationship(
+        "Project",
+        back_populates="test_executions",
+        lazy="select"  # 明确指定惰性加载策略
+    )
 
     def __repr__(self) -> str:
         """字符串表示."""

@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class TestCaseBase(BaseModel):
@@ -18,15 +18,13 @@ class TestCaseBase(BaseModel):
 
 class TestCaseOut(TestCaseBase):
     """测试用例输出 Schema."""
-    
+
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(..., description="测试用例 ID")
     project_id: int = Field(..., description="所属项目 ID")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
-    
-    model_config = {
-        "from_attributes": True  # Pydantic v2: 支持从 ORM 模型转换
-    }
 
 
 class TestCaseListResponse(BaseModel):

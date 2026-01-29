@@ -59,7 +59,11 @@ class TestCase(Base):
     )
 
     # Relationship: 所属项目
-    project: Mapped["Project"] = relationship("Project", back_populates="test_cases")
+    project: Mapped["Project"] = relationship(
+        "Project",
+        back_populates="test_cases",
+        lazy="select"  # 明确指定惰性加载策略
+    )
 
     # 复合唯一索引: 同一个项目下的 nodeid 必须唯一
     __table_args__ = (

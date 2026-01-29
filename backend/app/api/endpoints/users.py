@@ -1,7 +1,7 @@
 """用户相关 API 端点."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user, get_current_superuser, get_db
@@ -36,26 +36,46 @@ async def update_current_user(
 ) -> User:
     """
     更新当前用户信息.
-    
+
     Args:
         user_in: 用户更新信息
         current_user: 当前用户
         db: 数据库会话
-        
+
     Returns:
         User: 更新后的用户信息
+
+    Raises:
+        HTTPException: 400 邮箱已被其他用户占用
     """
+    # 更新邮箱（需要检查唯一性）
+    if user_in.email is not None:
+        # 检查新邮箱是否已被其他用户占用（使用 exists 优化查询）
+        stmt = select(exists().where(
+            User.email == user_in.email,
+            User.id != current_user.id  # 排除当前用户自己
+        ))
+        email_exists = await db.scalar(stmt)
+
+        if email_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="该邮箱已被其他用户使用"
+            )
+
+        current_user.email = user_in.email
+
     # 更新用户名
     if user_in.username is not None:
         current_user.username = user_in.username
-    
+
     # 更新密码
     if user_in.password is not None:
         current_user.hashed_password = get_password_hash(user_in.password)
-    
+
     await db.commit()
     await db.refresh(current_user)
-    
+
     return current_user
 
 

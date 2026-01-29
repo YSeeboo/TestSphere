@@ -20,14 +20,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/login")
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     获取数据库会话的依赖项.
-    
+
+    事务控制由端点显式管理（调用 db.commit()）。
+    如果端点发生异常，会自动 rollback。
+
     Yields:
         AsyncSession: 数据库异步会话
     """
     async with async_session_maker() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise

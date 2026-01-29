@@ -3,7 +3,7 @@
 from typing import Any, AsyncGenerator
 
 from app.core.config import settings
-from app.db.session import get_db
+from app.db.session import async_engine, get_db
 from fastapi import APIRouter, Depends, HTTPException, status
 from redis.asyncio import Redis
 from sqlalchemy import text
@@ -32,10 +32,10 @@ async def health_check(
 ) -> dict[str, Any]:
     """
     健康检查接口 - 验证数据库和 Redis 连接状态.
-    
+
     Returns:
         dict: 包含服务状态信息的字典
-        
+
     Raises:
         HTTPException: 当数据库或 Redis 连接失败时
     """
@@ -45,6 +45,7 @@ async def health_check(
         "version": settings.APP_VERSION,
         "database": "unknown",
         "redis": "unknown",
+        "database_pool": {},
     }
 
     # 检查数据库连接
@@ -59,6 +60,27 @@ async def health_check(
     except Exception as e:
         health_status["database"] = f"error: {str(e)}"
         health_status["status"] = "unhealthy"
+
+    # 获取数据库连接池状态
+    try:
+        pool = async_engine.pool
+        health_status["database_pool"] = {
+            "size": pool.size(),
+            "checked_in": pool.checkedin(),
+            "checked_out": pool.checkedout(),
+            "overflow": pool.overflow(),
+            "total_connections": pool.size() + pool.overflow(),
+        }
+
+        # 检查连接池是否接近耗尽（使用率超过 80%）
+        total_capacity = settings.DB_POOL_SIZE + settings.DB_MAX_OVERFLOW
+        current_usage = pool.size() + pool.overflow()
+        usage_ratio = current_usage / total_capacity if total_capacity > 0 else 0
+
+        if usage_ratio > 0.8:
+            health_status["database_pool"]["warning"] = f"Pool usage is high: {usage_ratio:.1%}"
+    except Exception as e:
+        health_status["database_pool"]["error"] = str(e)
 
     # 检查 Redis 连接
     try:
