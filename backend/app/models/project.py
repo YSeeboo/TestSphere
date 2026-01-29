@@ -51,7 +51,7 @@ class Project(Base):
         default="main",
         server_default="main"
     )
-    last_sync_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_sync_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_sync_status: Mapped[str] = mapped_column(
         String(20), 
         nullable=False, 
@@ -60,14 +60,14 @@ class Project(Base):
     )
     
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        default=lambda: datetime.now(timezone.utc), 
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        default=lambda: datetime.now(timezone.utc), 
-        onupdate=lambda: datetime.now(timezone.utc), 
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False
     )
 
