@@ -23,8 +23,27 @@ poetry install
 
 ```bash
 cp .env.example .env
-# 根据需要修改 .env 文件中的配置
 ```
+
+**⚠️ 重要：生成安全的 JWT 密钥**
+
+在 `.env` 文件中，您必须设置一个安全的 `SECRET_KEY`。使用以下命令生成：
+
+```bash
+# 使用 Python（推荐）
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# 或使用 OpenSSL
+openssl rand -hex 32
+```
+
+将生成的密钥复制到 `.env` 文件中的 `SECRET_KEY` 字段。
+
+**安全说明**：
+- ✅ `SECRET_KEY` 必须至少 32 字符
+- ✅ 必须通过环境变量设置，不能使用默认值
+- ✅ 生产环境会检测并拒绝不安全的示例密钥
+- ⚠️ 切勿将 `.env` 文件提交到版本控制系统
 
 ### 3. 启动基础设施
 
@@ -100,17 +119,25 @@ backend/
 
 ## 环境变量
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `APP_NAME` | 应用名称 | ATP Backend |
-| `DEBUG` | 调试模式 | False |
-| `POSTGRES_HOST` | PostgreSQL 主机 | localhost |
-| `POSTGRES_PORT` | PostgreSQL 端口 | 5432 |
-| `POSTGRES_USER` | PostgreSQL 用户 | atp_user |
-| `POSTGRES_PASSWORD` | PostgreSQL 密码 | atp_password |
-| `POSTGRES_DB` | PostgreSQL 数据库 | atp_db |
-| `REDIS_HOST` | Redis 主机 | localhost |
-| `REDIS_PORT` | Redis 端口 | 6379 |
+| 变量名 | 说明 | 默认值 | 必填 |
+|--------|------|--------|------|
+| `APP_NAME` | 应用名称 | ATP Backend | ❌ |
+| `DEBUG` | 调试模式 | False | ❌ |
+| `SECRET_KEY` | JWT 签名密钥 | 无 | ✅ |
+| `ALGORITHM` | JWT 算法 | HS256 | ❌ |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token 过期时间（分钟） | 30 | ❌ |
+| `POSTGRES_HOST` | PostgreSQL 主机 | localhost | ❌ |
+| `POSTGRES_PORT` | PostgreSQL 端口 | 5432 | ❌ |
+| `POSTGRES_USER` | PostgreSQL 用户 | atp_user | ❌ |
+| `POSTGRES_PASSWORD` | PostgreSQL 密码 | atp_password | ❌ |
+| `POSTGRES_DB` | PostgreSQL 数据库 | atp_db | ❌ |
+| `REDIS_HOST` | Redis 主机 | localhost | ❌ |
+| `REDIS_PORT` | Redis 端口 | 6379 | ❌ |
+
+**注意事项**：
+- ✅ 标记为必填的变量必须在 `.env` 中设置
+- `SECRET_KEY` 必须至少 32 字符，且不能使用不安全的示例值
+- 生产环境部署时，建议使用 Kubernetes Secrets 或其他密钥管理服务
 
 ## 许可证
 

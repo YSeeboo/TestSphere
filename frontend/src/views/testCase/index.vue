@@ -4,12 +4,15 @@
  * 展示当前项目的测试用例列表，支持分页和同步功能
  */
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, DocumentCopy } from '@element-plus/icons-vue'
 import { useProjectStore } from '@/stores/project'
 import { getTestCases } from '@/api/testCase'
+import { runTest } from '@/api/execution'
 import type { TestCase } from '@/types/testCase'
 
+const router = useRouter()
 const projectStore = useProjectStore()
 
 // 表格数据
@@ -26,6 +29,9 @@ const offset = computed(() => (currentPage.value - 1) * pageSize.value)
 
 // 是否正在同步
 const syncing = ref(false)
+
+// 是否正在运行测试
+const running = ref(false)
 
 /**
  * 加载测试用例列表
@@ -89,6 +95,48 @@ async function handleSync() {
       ElMessage.error('同步失败')
       syncing.value = false
     }
+  }
+}
+
+/**
+ * 运行测试
+ */
+async function handleRunTest() {
+  const projectId = projectStore.currentProjectId
+  if (!projectId) {
+    ElMessage.warning('请先选择项目')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      '将使用默认配置运行测试 (env=dev)。是否继续？',
+      '确认运行',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info',
+      }
+    )
+
+    running.value = true
+    const response = await runTest(projectId, { env: 'dev' })
+    const executionId = response.id ?? response.execution_id
+    
+    if (!executionId) {
+      ElMessage.error('未获取到执行 ID')
+      return
+    }
+    
+    ElMessage.success('测试已启动')
+    router.push(`/executions/${executionId}`)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('运行测试失败:', error)
+      ElMessage.error('运行测试失败')
+    }
+  } finally {
+    running.value = false
   }
 }
 
@@ -171,6 +219,9 @@ onMounted(() => {
           @click="handleSync"
         >
           {{ syncing ? '同步中...' : '同步用例' }}
+        </el-button>
+        <el-button type="primary" :loading="running" @click="handleRunTest">
+          {{ running ? '运行中...' : '运行测试' }}
         </el-button>
         <el-button :icon="Refresh" @click="loadTestCases">刷新</el-button>
       </div>

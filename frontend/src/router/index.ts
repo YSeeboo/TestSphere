@@ -77,6 +77,27 @@ const routes: RouteRecordRaw[] = [
           requiresProject: true, // 需要选择项目
         },
       },
+      // 执行记录列表
+      {
+        path: '/projects/:projectId/executions',
+        name: 'ExecutionList',
+        component: () => import('@/views/execution/list.vue'),
+        meta: {
+          title: '执行记录',
+          requiresAuth: true,
+          requiresProject: true, // 需要选择项目
+        },
+      },
+      // 执行详情
+      {
+        path: '/executions/:id',
+        name: 'ExecutionDetail',
+        component: () => import('@/views/execution/detail.vue'),
+        meta: {
+          title: '执行详情',
+          requiresAuth: true,
+        },
+      },
       // 保留原有的首页路由（兼容性）
       {
         path: '/home',

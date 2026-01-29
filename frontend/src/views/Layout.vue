@@ -5,7 +5,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Folder, DataAnalysis, HomeFilled, InfoFilled, User, DocumentCopy } from '@element-plus/icons-vue'
+import { Folder, DataAnalysis, HomeFilled, InfoFilled, User, DocumentCopy, Tickets } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useProjectStore } from '@/stores/project'
 
@@ -21,6 +21,12 @@ const currentProjectName = computed(() => {
 // 是否已选择项目
 const hasProject = computed(() => {
   return projectStore.currentProjectId !== null
+})
+
+// 执行记录路径
+const executionListPath = computed(() => {
+  if (!projectStore.currentProjectId) return '/projects'
+  return `/projects/${projectStore.currentProjectId}/executions`
 })
 
 const isCollapse = ref(false)
@@ -85,6 +91,12 @@ onMounted(() => {
         <el-menu-item v-if="hasProject" index="/test-cases">
           <el-icon><DocumentCopy /></el-icon>
           <template #title>用例管理</template>
+        </el-menu-item>
+        
+        <!-- 执行记录 - 仅在选择项目后显示 -->
+        <el-menu-item v-if="hasProject" :index="executionListPath">
+          <el-icon><Tickets /></el-icon>
+          <template #title>执行记录</template>
         </el-menu-item>
         
         <!-- 首页 - 仅在选择项目后显示 -->

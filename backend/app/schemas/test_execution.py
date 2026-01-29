@@ -22,15 +22,27 @@ class TestExecutionCreate(BaseModel):
 
 
 class TestExecutionOut(BaseModel):
-    """测试执行响应 Schema."""
+    """测试执行详情响应 Schema."""
 
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(..., description="执行记录ID")
-    project_id: int = Field(..., description="项目ID")
     status: str = Field(..., description="执行状态 (pending, running, success, failed)")
     trigger_type: str = Field(..., description="触发类型 (manual, scheduled, webhook)")
-    config: Optional[dict] = Field(None, description="执行配置")
     logs: Optional[str] = Field(None, description="执行日志")
     created_at: datetime = Field(..., description="创建时间")
-    updated_at: datetime = Field(..., description="更新时间")
+
+
+class TestExecutionListOut(BaseModel):
+    """测试执行列表项 Schema (不包含日志)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int = Field(..., description="执行记录ID")
+    status: str = Field(..., description="执行状态 (pending, running, success, failed)")
+    trigger_type: str = Field(..., description="触发类型 (manual, scheduled, webhook)")
+    created_at: datetime = Field(..., description="创建时间")
+
+
+class TestExecutionDetailOut(TestExecutionOut):
+    """测试执行详情 Schema (包含日志)."""

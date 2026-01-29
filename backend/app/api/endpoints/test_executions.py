@@ -8,13 +8,18 @@ from app.api.deps import get_current_active_user, get_db
 from app.models.project import Project
 from app.models.test_execution import TestExecution
 from app.models.user import User
-from app.schemas.test_execution import TestExecutionCreate, TestExecutionOut
+from app.schemas.test_execution import (
+    TestExecutionCreate,
+    TestExecutionDetailOut,
+    TestExecutionListOut,
+)
 from app.tasks.test_execution import run_test_execution
 
-router = APIRouter()
+project_router = APIRouter()
+execution_router = APIRouter()
 
 
-@router.post("/{project_id}/run", response_model=dict, status_code=status.HTTP_202_ACCEPTED)
+@project_router.post("/{project_id}/run", response_model=dict, status_code=status.HTTP_202_ACCEPTED)
 async def trigger_test_execution(
     project_id: int,
     execution_in: TestExecutionCreate,
@@ -77,6 +82,7 @@ async def trigger_test_execution(
     task = run_test_execution.delay(execution.id)
     
     return {
+        "id": execution.id,
         "execution_id": execution.id,
         "task_id": task.id,
         "status": "accepted",
@@ -84,7 +90,55 @@ async def trigger_test_execution(
     }
 
 
-@router.get("/{execution_id}", response_model=TestExecutionOut)
+@project_router.get("/{project_id}/executions", response_model=list[TestExecutionListOut])
+async def get_test_executions(
+    project_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[TestExecution]:
+    """
+    获取项目的测试执行列表.
+    
+    返回该项目最近 20 条执行记录 (按 id 倒序)。
+    只能获取当前用户拥有的项目的执行记录。
+    
+    Args:
+        project_id: 项目 ID
+        current_user: 当前用户
+        db: 数据库会话
+        
+    Returns:
+        list[TestExecution]: 执行记录列表
+        
+    Raises:
+        HTTPException: 404 项目不存在或无权访问
+    """
+    result = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.owner_id == current_user.id
+        )
+    )
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="项目不存在或无权访问"
+        )
+    
+    executions_result = await db.execute(
+        select(TestExecution)
+        .where(TestExecution.project_id == project_id)
+        .order_by(TestExecution.id.desc())
+        .limit(20)
+    )
+    executions = executions_result.scalars().all()
+    
+    return list(executions)
+
+
+@execution_router.get("/{execution_id}", response_model=TestExecutionDetailOut)
 async def get_test_execution(
     execution_id: int,
     current_user: User = Depends(get_current_active_user),
