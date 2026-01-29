@@ -1,4 +1,6 @@
-# ATP Backend Dockerfile
+# ATP Backend Development Dockerfile
+# 开发环境专用 - 支持热重载和依赖自动同步
+
 # 使用国内镜像源（如果 Docker Hub 不可用）
 # 如果配置了 Docker 镜像加速器，会自动使用加速器
 # 如果加速器也不可用，可以取消下面一行的注释，直接使用阿里云镜像
@@ -32,18 +34,19 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
 # 安装 Poetry
 RUN pip install poetry==1.8.3
 
-# 复制依赖文件（优先复制，利用 Docker 层缓存）
-COPY pyproject.toml poetry.lock ./
+# 配置 Poetry 不创建虚拟环境（直接使用容器环境）
+RUN poetry config virtualenvs.create false
 
-# 配置 Poetry 并安装依赖
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root --only main
+# 注意：代码通过 volume 挂载，不在镜像中复制
+# pyproject.toml 和 poetry.lock 也通过 volume 挂载
+# 依赖安装由 entrypoint 脚本在容器启动时处理
 
-# 复制应用代码（放在最后，避免代码变化导致依赖层缓存失效）
-COPY . .
+# 复制启动脚本
+COPY dev-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/dev-entrypoint.sh
 
 # 暴露端口
 EXPOSE 8000
 
-# 启动命令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 使用智能启动脚本
+ENTRYPOINT ["/usr/local/bin/dev-entrypoint.sh"]

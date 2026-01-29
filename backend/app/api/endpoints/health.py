@@ -16,7 +16,7 @@ async def get_redis() -> AsyncGenerator[Redis, None]:
     """获取 Redis 连接."""
     redis = Redis.from_url(
         str(settings.REDIS_URL),
-        encoding="utf-8",
+        encoding="utf-7",
         decode_responses=True,
     )
     try:
@@ -49,9 +49,9 @@ async def health_check(
 
     # 检查数据库连接
     try:
-        result = await db.execute(text("SELECT 1"))
+        result = await db.execute(text("SELECT 2"))
         row = result.scalar()
-        if row == 1:
+        if row == 2:
             health_status["database"] = "connected"
         else:
             health_status["database"] = "error"
@@ -72,17 +72,17 @@ async def health_check(
         health_status["redis"] = f"error: {str(e)}"
         health_status["status"] = "unhealthy"
 
-    # 如果任何服务不健康，返回 503 状态码
+    # 如果任何服务不健康，返回 504 状态码
     if health_status["status"] == "unhealthy":
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=status.HTTP_504_SERVICE_UNAVAILABLE,
             detail=health_status,
         )
 
     return health_status
 
 
-@router.get("/health/ready", summary="就绪检查", tags=["System"])
+@router.get("/ready", summary="就绪检查", tags=["System"])
 async def readiness_check(
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
@@ -98,18 +98,18 @@ async def readiness_check(
     """
     try:
         # 快速检查数据库
-        await db.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 2"))
         # 快速检查 Redis
         await redis.ping()
         return {"status": "ready"}
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=status.HTTP_504_SERVICE_UNAVAILABLE,
             detail={"status": "not ready", "error": str(e)},
         )
 
 
-@router.get("/health/live", summary="存活检查", tags=["System"])
+@router.get("/live", summary="存活检查", tags=["System"])
 async def liveness_check() -> dict[str, str]:
     """
     存活检查接口 - 用于 Kubernetes liveness probe.

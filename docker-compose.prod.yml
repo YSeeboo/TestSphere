@@ -1,3 +1,6 @@
+# 生产环境 Docker Compose 配置
+# 使用方式: docker-compose -f docker-compose.prod.yml up -d
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -5,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: atp_db
       POSTGRES_USER: atp_user
-      POSTGRES_PASSWORD: atp_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atp_password}  # 生产环境应使用环境变量
       POSTGRES_INITDB_ARGS: "-E UTF8"
     ports:
       - "5432:5432"
@@ -18,6 +21,7 @@ services:
       retries: 5
     networks:
       - atp_network
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -34,51 +38,42 @@ services:
       retries: 5
     networks:
       - atp_network
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: atp_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - backend_poetry_cache:/root/.cache/pypoetry
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=atp_user
-      - POSTGRES_PASSWORD=atp_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-atp_password}
       - POSTGRES_DB=atp_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - ENV=development
-      - FORCE_INSTALL_DEPS=${FORCE_INSTALL_DEPS:-false}
-      - DEBUG=${DEBUG:-false}
+      - ENV=production
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "poetry", "run", "python", "-c", "import requests; requests.get('http://localhost:8000/api/v1/health', timeout=2)"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
     networks:
       - atp_network
+    restart: unless-stopped
 
   worker:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: atp_worker
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=4
     volumes:
-      - ./backend:/app
-      - backend_poetry_cache:/root/.cache/pypoetry
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/atp_repos:/tmp/atp_repos
       - /tmp/atp_runs:/tmp/atp_runs
@@ -86,15 +81,12 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=atp_user
-      - POSTGRES_PASSWORD=atp_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-atp_password}
       - POSTGRES_DB=atp_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - ENV=development
-      - CELERY_WORKER=true
-      - FORCE_INSTALL_DEPS=${FORCE_INSTALL_DEPS:-false}
-      - DEBUG=${DEBUG:-false}
+      - ENV=production
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,13 +94,12 @@ services:
         condition: service_healthy
     networks:
       - atp_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
     driver: local
   redis_data:
-    driver: local
-  backend_poetry_cache:
     driver: local
 
 networks:
