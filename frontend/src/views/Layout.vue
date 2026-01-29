@@ -3,11 +3,11 @@
  * 主布局组件
  * 包含头部导航、侧边栏和内容区域
  */
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { Folder, DataAnalysis, HomeFilled, InfoFilled, User, DocumentCopy, Tickets } from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores/user'
 import { useProjectStore } from '@/stores/project'
+import { useUserStore } from '@/stores/user'
+import { DataAnalysis, DocumentCopy, Folder, HomeFilled, InfoFilled, Tickets, User } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -58,7 +58,7 @@ function handleLogout() {
 <template>
   <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
+    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar glass-effect">
       <div class="logo">
         <h2 v-if="!isCollapse">ATP Platform</h2>
         <h2 v-else>ATP</h2>
@@ -111,9 +111,9 @@ function handleLogout() {
     <!-- 主内容区 -->
     <el-container>
       <!-- 顶部导航栏 -->
-      <el-header class="header">
+      <el-header class="header glass-effect">
         <div class="header-left">
-          <el-button :icon="isCollapse ? 'Expand' : 'Fold'" @click="toggleSidebar" />
+          <el-button :icon="isCollapse ? 'Expand' : 'Fold'" @click="toggleSidebar" text />
           <span class="header-title">ATP Platform</span>
           <el-divider direction="vertical" />
           <span class="current-project">
@@ -152,7 +152,8 @@ function handleLogout() {
 }
 
 .sidebar {
-  background-color: #304156;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
   transition: width 0.3s;
   
   .logo {
@@ -160,19 +161,39 @@ function handleLogout() {
     align-items: center;
     justify-content: center;
     height: 60px;
-    background-color: #2b3a4b;
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     
     h2 {
       margin: 0;
-      color: #fff;
-      font-size: 24px;
-      font-weight: bold;
+      color: #1d1d1f;
+      font-size: 20px;
+      font-weight: 600;
     }
   }
   
   .sidebar-menu {
     border-right: none;
-    background-color: #304156;
+    background-color: transparent;
+    padding: 10px;
+
+    :deep(.el-menu-item) {
+      border-radius: 8px;
+      margin-bottom: 4px;
+      height: 44px;
+      line-height: 44px;
+      color: #1d1d1f;
+      
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+
+      &.is-active {
+        background-color: #e5e5ea;
+        color: #0071e3;
+        font-weight: 500;
+      }
+    }
   }
 }
 
@@ -180,9 +201,10 @@ function handleLogout() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-bottom: none;
   padding: 0 20px;
+  z-index: 10;
   
   .header-left {
     flex: 1;
@@ -193,7 +215,7 @@ function handleLogout() {
     .header-title {
       font-size: 18px;
       font-weight: 600;
-      color: #303133;
+      color: #1d1d1f;
     }
     
     .current-project {
@@ -201,10 +223,10 @@ function handleLogout() {
       align-items: center;
       gap: 6px;
       font-size: 14px;
-      color: #606266;
+      color: #1d1d1f;
       padding: 4px 12px;
-      background-color: #f5f7fa;
-      border-radius: 4px;
+      background-color: rgba(0, 0, 0, 0.04);
+      border-radius: 6px;
     }
   }
   
@@ -215,19 +237,20 @@ function handleLogout() {
       gap: 8px;
       cursor: pointer;
       padding: 0 12px;
-      height: 40px;
-      border-radius: 4px;
+      height: 36px;
+      border-radius: 18px;
       transition: background-color 0.3s;
+      color: #1d1d1f;
       
       &:hover {
-        background-color: #f5f7fa;
+        background-color: rgba(0, 0, 0, 0.04);
       }
     }
   }
 }
 
 .main-content {
-  background-color: #f0f2f5;
-  padding: 20px;
+  background-color: var(--el-bg-color-page);
+  padding: 24px;
 }
 </style>

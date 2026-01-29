@@ -1,0 +1,29 @@
+// 覆盖 Element Plus CSS 变量 - Apple Style
+:root {
+  // Brand Colors
+  --el-color-primary: #0071e3;
+  // Generate variations for primary color (hover, active states)
+  // These are approximations to match the Apple Blue feel
+  --el-color-primary-light-3: #338df5;
+  --el-color-primary-light-5: #66a9f8;
+  --el-color-primary-light-7: #99c5fb;
+  --el-color-primary-light-8: #b3d3fc;
+  --el-color-primary-light-9: #e5f1fe;
+  --el-color-primary-dark-2: #005bb6;
+
+  // Background Colors
+  --el-bg-color-page: #F5F5F7;
+  --el-bg-color: #FFFFFF;
+
+  // Border Radius
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+
+  // Box Shadows
+  --el-box-shadow-light: 0 8px 30px rgba(0, 0, 0, 0.04);
+  --el-box-shadow-base: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  // Font Family (ensure this propagates to Element Plus components)
+  --el-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}

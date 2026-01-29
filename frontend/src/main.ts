@@ -1,14 +1,14 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import { ElMessage } from 'element-plus'
+import '@/styles/index.scss'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import ElementPlus, { ElMessage } from 'element-plus'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { createPinia } from 'pinia'
+import { createApp } from 'vue'
 
+import { useUserStore } from '@/stores/user'
 import App from './App.vue'
 import router from './router'
-import { useUserStore } from '@/stores/user'
 
 const app = createApp(App)
 

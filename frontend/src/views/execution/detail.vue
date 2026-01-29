@@ -2,13 +2,13 @@
 /**
  * 执行详情页面 (带轮询)
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { ArrowLeft, Refresh, Tickets } from '@element-plus/icons-vue'
-import { getExecutionDetail } from '@/api/execution'
 import type { ExecutionDetail } from '@/api/execution'
+import { getExecutionDetail } from '@/api/execution'
 import { useProjectStore } from '@/stores/project'
+import { ArrowLeft, Refresh, Tickets } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
@@ -207,10 +207,11 @@ onUnmounted(() => {
       
       .log-content {
         margin: 0;
-        padding: 16px;
-        background: #000;
+        padding: 24px;
+        background: #1e1e1e;
         color: #4cff7a;
-        border-radius: 4px;
+        border-radius: 16px;
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
         font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
         font-size: 13px;
         line-height: 1.6;
@@ -218,6 +219,27 @@ onUnmounted(() => {
         overflow: auto;
         white-space: pre-wrap;
         word-break: break-word;
+        
+        /* Custom scrollbar for terminal look */
+        &::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: #1e1e1e;
+          border-radius: 0 0 16px 0;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: #424242;
+          border-radius: 5px;
+          border: 2px solid #1e1e1e;
+          
+          &:hover {
+            background: #555;
+          }
+        }
       }
     }
   }

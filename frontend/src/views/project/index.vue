@@ -16,7 +16,7 @@
         description="暂无项目，请创建一个项目开始使用" 
       />
       
-      <el-row v-else :gutter="20">
+      <el-row v-else :gutter="24">
         <el-col 
           v-for="project in projectStore.projects" 
           :key="project.id"
@@ -25,7 +25,7 @@
           :md="8"
           :lg="6"
         >
-          <el-card class="project-card" shadow="hover">
+          <el-card class="project-card" shadow="never" :body-style="{ padding: '24px' }">
             <!-- 项目名称 -->
             <template #header>
               <div class="card-header">
@@ -143,13 +143,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
-import { Plus, Link } from '@element-plus/icons-vue'
-import { useProjectStore } from '@/stores/project'
 import { syncProject } from '@/api/project'
+import { useProjectStore } from '@/stores/project'
 import type { Project, ProjectCreate } from '@/types/project'
+import { Link, Plus } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -319,8 +319,6 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .project-container {
-  padding: 20px;
-  background-color: #f5f5f5;
   min-height: calc(100vh - 60px);
 }
 
@@ -328,17 +326,13 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
+  margin-bottom: 24px;
+  
   h2 {
     margin: 0;
-    font-size: 24px;
-    font-weight: 500;
-    color: #303133;
+    font-size: 32px;
+    font-weight: 600;
+    color: #1d1d1f;
   }
 }
 
@@ -347,11 +341,28 @@ onMounted(() => {
 }
 
 .project-card {
-  margin-bottom: 20px;
-  transition: transform 0.2s;
+  margin-bottom: 24px;
+  border: none;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
   &:hover {
     transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  :deep(.el-card__header) {
+    border-bottom: none;
+    padding: 24px 24px 0 24px;
+  }
+  
+  // body padding is set via prop
+
+  :deep(.el-card__footer) {
+    border-top: none;
+    padding: 0 24px 24px 24px;
   }
 
   .card-header {
@@ -360,9 +371,9 @@ onMounted(() => {
     align-items: center;
 
     .project-name {
-      font-size: 18px;
-      font-weight: 500;
-      color: #303133;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1d1d1f;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -373,10 +384,10 @@ onMounted(() => {
     min-height: 100px;
 
     .project-description {
-      color: #606266;
-      font-size: 14px;
-      line-height: 1.6;
-      margin: 0 0 12px 0;
+      color: #86868b;
+      font-size: 15px;
+      line-height: 1.5;
+      margin: 8px 0 16px 0;
       min-height: 44px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -390,8 +401,8 @@ onMounted(() => {
       align-items: center;
       gap: 6px;
       margin-bottom: 8px;
-      color: #409EFF;
-      font-size: 12px;
+      color: #0071e3;
+      font-size: 13px;
 
       .git-url {
         flex: 1;
@@ -399,12 +410,16 @@ onMounted(() => {
         text-overflow: ellipsis;
         white-space: nowrap;
         cursor: pointer;
+        
+        &:hover {
+          text-decoration: underline;
+        }
       }
     }
 
     .project-time {
-      color: #909399;
-      font-size: 12px;
+      color: #86868b;
+      font-size: 13px;
       margin: 0;
     }
   }
@@ -412,11 +427,13 @@ onMounted(() => {
   .card-footer {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
+    margin-top: 16px;
 
     .el-button {
       flex: 1;
       min-width: 80px;
+      border-radius: 8px;
     }
   }
 }
