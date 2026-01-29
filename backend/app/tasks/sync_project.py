@@ -7,7 +7,7 @@ import json
 import logging
 import os
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -200,7 +200,7 @@ def sync_project_test_cases(self, project_id: int) -> dict[str, Any]:
                 existing_tc.name = tc_data["name"]
                 existing_tc.description = tc_data.get("description")
                 existing_tc.markers = tc_data.get("markers")
-                existing_tc.updated_at = datetime.utcnow()
+                existing_tc.updated_at = datetime.now(timezone.utc)
                 logger.debug(f"更新测试用例: {tc_data['nodeid']}")
             else:
                 # 创建新测试用例
@@ -218,7 +218,7 @@ def sync_project_test_cases(self, project_id: int) -> dict[str, Any]:
             upserted_count += 1
         
         # ==================== 6. 更新项目同步状态 ====================
-        project.last_sync_time = datetime.utcnow()
+        project.last_sync_time = datetime.now(timezone.utc)
         project.last_sync_status = "Success"
         
         db.commit()
@@ -238,7 +238,7 @@ def sync_project_test_cases(self, project_id: int) -> dict[str, Any]:
         if project:
             try:
                 project.last_sync_status = "Failed"
-                project.last_sync_time = datetime.utcnow()
+                project.last_sync_time = datetime.now(timezone.utc)
                 db.commit()
             except Exception as commit_error:
                 logger.error(f"更新项目状态失败: {commit_error}")

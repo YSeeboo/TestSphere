@@ -1,11 +1,11 @@
 """测试用例模型."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
-from sqlalchemy import String, Text, DateTime, ForeignKey, Index, JSON
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+from sqlalchemy import JSON, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
     from app.models.project import Project
@@ -47,14 +47,14 @@ class TestCase(Base):
     markers: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        default=datetime.utcnow, 
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
         nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime, 
-        default=datetime.utcnow, 
-        onupdate=datetime.utcnow, 
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False
     )
 

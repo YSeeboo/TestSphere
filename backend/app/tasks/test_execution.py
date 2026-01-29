@@ -6,7 +6,7 @@
 import logging
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -148,7 +148,7 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             logger.error(f"项目 {execution.project_id} 不存在")
             execution.status = "failed"
             execution.logs = f"项目 {execution.project_id} 不存在"
-            execution.updated_at = datetime.utcnow()
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             return {
                 "status": "failed",
@@ -168,8 +168,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             )
             logger.error(error_msg)
             execution.status = "failed"
-            execution.logs = f"[{datetime.utcnow().isoformat()}] 错误: {error_msg}\n"
-            execution.updated_at = datetime.utcnow()
+            execution.logs = f"[{datetime.now(timezone.utc).isoformat()}] 错误: {error_msg}\n"
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             return {
                 "status": "failed",
@@ -192,8 +192,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             error_msg = f"复制代码到执行目录失败: {e}"
             logger.error(error_msg)
             execution.status = "failed"
-            execution.logs = f"[{datetime.utcnow().isoformat()}] 错误: {error_msg}\n"
-            execution.updated_at = datetime.utcnow()
+            execution.logs = f"[{datetime.now(timezone.utc).isoformat()}] 错误: {error_msg}\n"
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             return {
                 "status": "failed",
@@ -204,10 +204,10 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
         # ==================== 4. 更新状态为 running ====================
         logger.info(f"更新测试执行 {execution_id} 状态为 running")
         execution.status = "running"
-        execution.logs = f"[{datetime.utcnow().isoformat()}] 开始执行测试\n"
-        execution.logs += f"[{datetime.utcnow().isoformat()}] 代码源: {repo_path}\n"
-        execution.logs += f"[{datetime.utcnow().isoformat()}] 执行目录: {run_path}\n"
-        execution.updated_at = datetime.utcnow()
+        execution.logs = f"[{datetime.now(timezone.utc).isoformat()}] 开始执行测试\n"
+        execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 代码源: {repo_path}\n"
+        execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 执行目录: {run_path}\n"
+        execution.updated_at = datetime.now(timezone.utc)
         db.commit()
         
         # ==================== 5. Docker 容器执行 ====================
@@ -216,7 +216,7 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
         # 记录配置信息到日志
         config = execution.config or {}
         
-        execution.logs += f"[{datetime.utcnow().isoformat()}] 配置信息:\n"
+        execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 配置信息:\n"
         execution.logs += f"  - Config: {config}\n"
         db.commit()
         
@@ -224,14 +224,14 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
         try:
             cmd = build_test_command(config)
             logger.info(f"构建的测试命令: {cmd}")
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 执行命令: {cmd}\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 执行命令: {cmd}\n"
             db.commit()
         except Exception as e:
             error_msg = f"构建测试命令失败: {e}"
             logger.error(error_msg)
             execution.status = "failed"
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 错误: {error_msg}\n"
-            execution.updated_at = datetime.utcnow()
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 错误: {error_msg}\n"
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             return {
                 "status": "failed",
@@ -246,12 +246,12 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             logger.info("连接 Docker 守护进程")
             client = docker.from_env()
             
-            execution.logs += f"[{datetime.utcnow().isoformat()}] Docker 连接成功\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] Docker 连接成功\n"
             db.commit()
             
             # 运行容器
             logger.info(f"启动 Docker 容器执行测试")
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 启动 Docker 容器...\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 启动 Docker 容器...\n"
             db.commit()
             
             container = client.containers.run(
@@ -264,8 +264,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             )
             
             logger.info(f"容器已启动: {container.id}")
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 容器 ID: {container.short_id}\n"
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 等待容器执行完成...\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 容器 ID: {container.short_id}\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 等待容器执行完成...\n"
             db.commit()
             
             # 等待容器执行完成
@@ -277,8 +277,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             # 获取容器日志
             logs = container.logs().decode('utf-8', errors='replace')
             
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 容器执行完成\n"
-            execution.logs += f"[{datetime.utcnow().isoformat()}] 退出码: {exit_code}\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 容器执行完成\n"
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 退出码: {exit_code}\n"
             execution.logs += f"\n{'='*60}\n"
             execution.logs += f"容器输出日志:\n"
             execution.logs += f"{'='*60}\n"
@@ -295,14 +295,14 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             # ==================== 6. 根据退出码更新状态 ====================
             if exit_code == 0:
                 execution.status = "success"
-                execution.logs += f"[{datetime.utcnow().isoformat()}] ✅ 测试执行成功\n"
+                execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ✅ 测试执行成功\n"
                 logger.info(f"测试执行 {execution_id} 成功完成")
             else:
                 execution.status = "failed"
-                execution.logs += f"[{datetime.utcnow().isoformat()}] ❌ 测试执行失败 (退出码: {exit_code})\n"
+                execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ❌ 测试执行失败 (退出码: {exit_code})\n"
                 logger.warning(f"测试执行 {execution_id} 失败，退出码: {exit_code}")
             
-            execution.updated_at = datetime.utcnow()
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             
         except docker.errors.DockerException as docker_error:
@@ -311,8 +311,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             logger.error(error_msg)
             
             execution.status = "failed"
-            execution.logs += f"[{datetime.utcnow().isoformat()}] ❌ Docker 错误: {docker_error}\n"
-            execution.updated_at = datetime.utcnow()
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ❌ Docker 错误: {docker_error}\n"
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             
             # 尝试清理容器
@@ -334,8 +334,8 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             logger.error(error_msg)
             
             execution.status = "failed"
-            execution.logs += f"[{datetime.utcnow().isoformat()}] ❌ 执行错误: {exec_error}\n"
-            execution.updated_at = datetime.utcnow()
+            execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ❌ 执行错误: {exec_error}\n"
+            execution.updated_at = datetime.now(timezone.utc)
             db.commit()
             
             # 尝试清理容器
@@ -367,10 +367,10 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             try:
                 execution.status = "failed"
                 if execution.logs:
-                    execution.logs += f"[{datetime.utcnow().isoformat()}] 错误: {str(e)}\n"
+                    execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 错误: {str(e)}\n"
                 else:
-                    execution.logs = f"[{datetime.utcnow().isoformat()}] 错误: {str(e)}\n"
-                execution.updated_at = datetime.utcnow()
+                    execution.logs = f"[{datetime.now(timezone.utc).isoformat()}] 错误: {str(e)}\n"
+                execution.updated_at = datetime.now(timezone.utc)
                 db.commit()
             except Exception as commit_error:
                 logger.error(f"更新执行状态失败: {commit_error}")
