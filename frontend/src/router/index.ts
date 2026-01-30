@@ -98,6 +98,17 @@ const routes: RouteRecordRaw[] = [
           requiresAuth: true,
         },
       },
+      // 定时任务设置
+      {
+        path: '/projects/:projectId/settings/cron',
+        name: 'ProjectCronSettings',
+        component: () => import('@/views/project/settings/index.vue'),
+        meta: {
+          title: '定时任务',
+          requiresAuth: true,
+          requiresProject: true,
+        },
+      },
       // 保留原有的首页路由（兼容性）
       {
         path: '/home',

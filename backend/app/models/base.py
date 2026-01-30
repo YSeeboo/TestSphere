@@ -5,6 +5,7 @@ from app.models.user import User
 from app.models.project import Project
 from app.models.test_case import TestCase
 from app.models.test_execution import TestExecution
+from app.models.cron_job import CronJob
 
 # 导出所有模型，供 Alembic 自动检测使用
-__all__ = ["Base", "User", "Project", "TestCase", "TestExecution"]
+__all__ = ["Base", "User", "Project", "TestCase", "TestExecution", "CronJob"]

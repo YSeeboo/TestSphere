@@ -6,6 +6,7 @@
 import logging
 import os
 import shutil
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 # 定义目录路径常量
 REPOS_BASE_DIR = Path("/tmp/atp_repos")
 RUNS_BASE_DIR = Path("/tmp/atp_runs")
+STATIC_BASE_DIR = Path("/app/static")
+REPORTS_BASE_DIR = STATIC_BASE_DIR / "reports"
 
 
 def _ensure_directory_exists(directory: Path) -> None:
@@ -202,6 +205,12 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
                 "message": error_msg,
                 "execution_id": execution_id,
             }
+
+        # 确保 Allure 结果目录存在（供 pytest 写入）
+        try:
+            _ensure_directory_exists(run_path / "allure-results")
+        except Exception as e:
+            logger.warning(f"创建 Allure 结果目录失败: {e}")
         
         # ==================== 4. 更新状态为 running ====================
         logger.info(f"更新测试执行 {execution_id} 状态为 running")
@@ -225,6 +234,12 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
         # 构建测试命令
         try:
             cmd = build_test_command(config)
+            if "--alluredir=" not in cmd:
+                cmd = cmd.replace(
+                    "pytest",
+                    "pytest --alluredir=/app/allure-results",
+                    1,
+                )
             logger.info(f"构建的测试命令: {cmd}")
             execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] 执行命令: {cmd}\n"
             db.commit()
@@ -287,7 +302,53 @@ def run_test_execution(self, execution_id: int) -> dict[str, Any]:
             execution.logs += logs
             execution.logs += f"\n{'='*60}\n"
 
-            # ==================== 6. 根据退出码更新状态 ====================
+            # ==================== 6. 生成 Allure 报告 ====================
+            allure_results_dir = run_path / "allure-results"
+            report_dir = REPORTS_BASE_DIR / str(execution_id)
+
+            try:
+                _ensure_directory_exists(REPORTS_BASE_DIR)
+
+                if not allure_results_dir.exists():
+                    execution.logs += (
+                        f"[{datetime.now(timezone.utc).isoformat()}] ⚠️ 未找到 Allure 结果目录: "
+                        f"{allure_results_dir}\n"
+                    )
+                else:
+                    logger.info(f"生成 Allure 报告: {allure_results_dir} -> {report_dir}")
+                    allure_result = subprocess.run(
+                        [
+                            "allure",
+                            "generate",
+                            str(allure_results_dir),
+                            "-o",
+                            str(report_dir),
+                            "--clean",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    execution.logs += (
+                        f"[{datetime.now(timezone.utc).isoformat()}] "
+                        f"Allure 报告生成完成 (退出码: {allure_result.returncode})\n"
+                    )
+                    if allure_result.stdout:
+                        execution.logs += allure_result.stdout + "\n"
+                    if allure_result.stderr:
+                        execution.logs += allure_result.stderr + "\n"
+            except FileNotFoundError:
+                execution.logs += (
+                    f"[{datetime.now(timezone.utc).isoformat()}] "
+                    "❌ 未找到 Allure CLI，请确认容器已安装 allure\n"
+                )
+            except Exception as e:
+                execution.logs += (
+                    f"[{datetime.now(timezone.utc).isoformat()}] "
+                    f"❌ 生成 Allure 报告失败: {e}\n"
+                )
+
+            # ==================== 7. 根据退出码更新状态 ====================
             if exit_code == 0:
                 execution.status = "success"
                 execution.logs += f"[{datetime.now(timezone.utc).isoformat()}] ✅ 测试执行成功\n"

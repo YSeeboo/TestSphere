@@ -51,6 +51,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path, // 保持 /api 前缀
       },
+      // 代理 Allure 报告静态文件
+      '/reports': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
 

@@ -46,6 +46,11 @@ celery_app.conf.update(
             "schedule": 3600.0,  # 1 小时
             "args": (24,),  # 保留24小时
         },
+        # 每分钟检查 Cron 任务
+        "check-and-trigger-cron-jobs": {
+            "task": "worker.check_and_trigger_cron_jobs",
+            "schedule": 60.0,
+        },
     },
 )
 

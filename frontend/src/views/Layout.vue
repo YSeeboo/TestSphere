@@ -5,7 +5,7 @@
  */
 import { useProjectStore } from '@/stores/project'
 import { useUserStore } from '@/stores/user'
-import { DataAnalysis, DocumentCopy, Folder, HomeFilled, InfoFilled, Tickets, User } from '@element-plus/icons-vue'
+import { Clock, DataAnalysis, DocumentCopy, Folder, HomeFilled, InfoFilled, Tickets, User } from '@element-plus/icons-vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -27,6 +27,12 @@ const hasProject = computed(() => {
 const executionListPath = computed(() => {
   if (!projectStore.currentProjectId) return '/projects'
   return `/projects/${projectStore.currentProjectId}/executions`
+})
+
+// 定时任务设置路径
+const cronSettingsPath = computed(() => {
+  if (!projectStore.currentProjectId) return '/projects'
+  return `/projects/${projectStore.currentProjectId}/settings/cron`
 })
 
 const isCollapse = ref(false)
@@ -92,6 +98,12 @@ function handleLogout() {
         <el-menu-item v-if="hasProject" :index="executionListPath">
           <el-icon><Tickets /></el-icon>
           <template #title>执行记录</template>
+        </el-menu-item>
+
+        <!-- 定时任务 - 仅在选择项目后显示 -->
+        <el-menu-item v-if="hasProject" :index="cronSettingsPath">
+          <el-icon><Clock /></el-icon>
+          <template #title>定时任务</template>
         </el-menu-item>
         
         <!-- 首页 - 仅在选择项目后显示 -->

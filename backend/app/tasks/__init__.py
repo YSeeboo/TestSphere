@@ -14,5 +14,6 @@
 # 导入所有任务以便 Celery 自动发现
 from app.tasks.sync_project import sync_project_test_cases
 from app.tasks.test_execution import run_test_execution
+from app.tasks.cron_job import check_and_trigger_cron_jobs
 
-__all__ = ["sync_project_test_cases", "run_test_execution"]
+__all__ = ["sync_project_test_cases", "run_test_execution", "check_and_trigger_cron_jobs"]

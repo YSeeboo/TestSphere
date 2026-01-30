@@ -26,14 +26,14 @@ def build_test_command(params: dict) -> str:
     pytest_cmd = "pytest"
     
     # 拼接 marker 参数
-    marker = params.get("marker")
+    marker = params.get("marker") or params.get("marker_expression")
     if marker:
         # 转义内部引号
         escaped_marker = marker.replace('"', '\\"')
         pytest_cmd += f' -m \\"{escaped_marker}\\"'
     
     # 拼接 keyword 参数
-    keyword = params.get("keyword")
+    keyword = params.get("keyword") or params.get("keyword_expression")
     if keyword:
         # 转义内部引号
         escaped_keyword = keyword.replace('"', '\\"')

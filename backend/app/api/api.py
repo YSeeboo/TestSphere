@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.endpoints import auth, health, users, projects, test_executions
+from app.api.endpoints import auth, health, users, projects, test_executions, cron_jobs
 
 # 创建 API v1 路由
 api_router = APIRouter()
@@ -14,3 +14,4 @@ api_router.include_router(users.router, prefix="/users", tags=["用户"])
 api_router.include_router(projects.router, prefix="/projects", tags=["项目"])
 api_router.include_router(test_executions.project_router, prefix="/projects", tags=["测试执行"])
 api_router.include_router(test_executions.execution_router, prefix="/test-executions", tags=["测试执行"])
+api_router.include_router(cron_jobs.router, tags=["定时任务"])

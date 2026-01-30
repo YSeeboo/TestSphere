@@ -20,6 +20,20 @@ let pollingTimer: number | null = null
 
 const executionId = computed(() => Number(route.params.id))
 
+const reportBaseUrl = computed(() => {
+  const apiBase = import.meta.env.VITE_APP_BASE_API || '/api/v1'
+  if (apiBase.startsWith('http')) {
+    return apiBase.replace(/\/api\/v1\/?$/, '')
+  }
+  const normalized = apiBase.replace(/\/api\/v1\/?$/, '')
+  return `${window.location.origin}${normalized}`
+})
+
+const canViewReport = computed(() => {
+  const status = execution.value?.status
+  return status === 'success' || status === 'failed'
+})
+
 /**
  * 判断是否需要轮询
  */
@@ -102,6 +116,15 @@ function getStatusType(status: string | undefined): 'success' | 'danger' | 'warn
   return 'info'
 }
 
+function openReport() {
+  if (!executionId.value || Number.isNaN(executionId.value)) {
+    ElMessage.error('无效的执行 ID')
+    return
+  }
+  const url = `${reportBaseUrl.value}/reports/${executionId.value}/index.html`
+  window.open(url, '_blank')
+}
+
 /**
  * 格式化日期时间
  */
@@ -139,6 +162,7 @@ onUnmounted(() => {
       </div>
       <div class="header-right">
         <el-button :icon="ArrowLeft" @click="goBack">返回列表</el-button>
+        <el-button v-if="canViewReport" type="primary" @click="openReport">查看测试报告</el-button>
         <el-button :icon="Refresh" @click="loadExecutionDetail">刷新</el-button>
       </div>
     </div>

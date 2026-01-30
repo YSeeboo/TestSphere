@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.test_case import TestCase
     from app.models.test_execution import TestExecution
+    from app.models.cron_job import CronJob
 
 
 class Project(Base):
@@ -92,6 +93,14 @@ class Project(Base):
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="select"  # 明确指定惰性加载策略
+    )
+
+    # Relationship: 项目的定时任务
+    cron_jobs: Mapped[list["CronJob"]] = relationship(
+        "CronJob",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="select",
     )
 
     def __repr__(self) -> str:

@@ -44,6 +44,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/static:/app/static
       - backend_poetry_cache:/root/.cache/pypoetry
     environment:
       - POSTGRES_HOST=postgres
@@ -78,6 +79,7 @@ services:
     container_name: atp_worker
     volumes:
       - ./backend:/app
+      - ./backend/static:/app/static
       - backend_poetry_cache:/root/.cache/pypoetry
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/atp_repos:/tmp/atp_repos
@@ -93,6 +95,35 @@ services:
       - REDIS_DB=0
       - ENV=development
       - CELERY_WORKER=true
+      - FORCE_INSTALL_DEPS=${FORCE_INSTALL_DEPS:-false}
+      - DEBUG=${DEBUG:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - atp_network
+
+  beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: atp_beat
+    volumes:
+      - ./backend:/app
+      - backend_poetry_cache:/root/.cache/pypoetry
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=atp_user
+      - POSTGRES_PASSWORD=atp_password
+      - POSTGRES_DB=atp_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - ENV=development
+      - CELERY_BEAT=true
       - FORCE_INSTALL_DEPS=${FORCE_INSTALL_DEPS:-false}
       - DEBUG=${DEBUG:-false}
     depends_on:

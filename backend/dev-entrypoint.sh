@@ -122,7 +122,18 @@ if [ "$NEED_INSTALL" = true ]; then
 fi
 
 # 根据环境变量决定启动模式
-if [ "$CELERY_WORKER" = "true" ]; then
+if [ "$CELERY_BEAT" = "true" ]; then
+    # Beat 模式
+    echo "=========================================="
+    echo "启动 Celery Beat"
+    echo "=========================================="
+    echo "  - App: app.core.celery_app"
+    echo "  - Log Level: info"
+    echo "=========================================="
+    echo ""
+
+    exec poetry run celery -A app.core.celery_app beat --loglevel=info
+elif [ "$CELERY_WORKER" = "true" ]; then
     # Worker 模式
     echo "=========================================="
     echo "启动 Celery Worker"

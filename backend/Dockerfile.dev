@@ -25,7 +25,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
     git \
+    default-jre \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# 安装 Allure CLI
+ARG ALLURE_VERSION=2.25.0
+RUN wget -qO /tmp/allure.tgz https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz \
+    && tar -xzf /tmp/allure.tgz -C /opt/ \
+    && ln -s /opt/allure-${ALLURE_VERSION}/bin/allure /usr/bin/allure \
+    && rm -f /tmp/allure.tgz
 
 # 配置 pip 国内镜像源（加速 pip install）
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \

@@ -1,10 +1,12 @@
 """FastAPI 应用主入口."""
 
 from contextlib import asynccontextmanager
+import os
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api.api import api_router
@@ -41,6 +43,11 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
     lifespan=lifespan,
 )
+
+# 配置静态文件目录（Allure 报告）
+reports_dir = "/app/static/reports"
+os.makedirs(reports_dir, exist_ok=True)
+app.mount("/reports", StaticFiles(directory=reports_dir), name="reports")
 
 # 配置 CORS 中间件
 app.add_middleware(
